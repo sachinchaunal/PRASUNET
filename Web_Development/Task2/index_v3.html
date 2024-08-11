@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch</title>
+    <style>
+        /* styles.css */
+        body,
+        html {
+            height: 100%;
+            /* Ensure the full height is used */
+            margin: 0;
+            /* Reset default margin */
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-height: 100vh;
+            /* Prevent the container from exceeding the viewport height */
+            overflow: auto;
+            /* Allows scrolling within the container if content exceeds its max height */
+            margin-top: 100px;
+        }
+
+        .stopwatch {
+            position: sticky;
+            width: 50vw;
+            top: 0;
+            /* Stick to the top of the viewport */
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            /* Ensure it stays above other content */
+        }
+
+        #time-display {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+
+        #laps {
+            width: 52vw;
+            text-align: center;
+            display: flex;
+            gap: 10px;
+            margin: 5px 0;
+            padding: 5px;
+            background: #ffffff;
+            border-radius: 10px;
+            flex-direction: column;
+            flex-wrap: wrap;
+        }
+        #laps div{
+            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 10px;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="stopwatch">
+            <div id="time-display">00:00:00.000</div>
+            <div class="buttons">
+                <button id="start-btn">Start</button>
+                <button id="pause-btn">Pause</button>
+                <button id="reset-btn">Reset</button>
+                <button id="lap-btn">Lap</button>
+            </div>
+        </div>
+        <div id="laps"></div>
+    </div>
+    <script>
+        // script.js
+        let startTime, updatedTime, difference, tInterval;
+        let running = false;
+        let laps = [];
+
+        const timeDisplay = document.getElementById('time-display');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const lapBtn = document.getElementById('lap-btn');
+        const lapsContainer = document.getElementById('laps');
+
+        startBtn.addEventListener('click', start);
+        pauseBtn.addEventListener('click', pause);
+        resetBtn.addEventListener('click', reset);
+        lapBtn.addEventListener('click', lap);
+
+        function pause() {
+            if (running) {
+                clearInterval(tInterval);
+                running = false;
+                startBtn.textContent = 'Resume'; // Change the Start button text to Resume
+            }
+        }
+
+        function start() {
+            if (!running) {
+                if (startBtn.textContent === 'Resume') {
+                    startBtn.textContent = 'Start'; // Change the Resume button text back to Start
+                }
+                startTime = new Date().getTime() - (difference || 0);
+                tInterval = setInterval(updateTime, 10);
+                running = true;
+            }
+        }
+
+        function reset() {
+            clearInterval(tInterval); // Stop the timer
+            running = false; // Set running state to false
+            difference = 0; // Reset the difference used for timing
+            timeDisplay.innerHTML = '00:00:00.000'; // Reset the display to zero
+            laps = []; // Clear any recorded laps
+            lapsContainer.innerHTML = ''; // Clear the laps display
+            startBtn.textContent = 'Start'; // Reset the start button text to "Start"
+        }
+
+        function lap() {
+            if (running) {
+                laps.push(difference);
+                displayLaps();
+            }
+        }
+
+        function updateTime() {
+            updatedTime = new Date().getTime();
+            difference = updatedTime - startTime;
+
+            let hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((difference % (1000 * 60)) / 1000);
+            let milliseconds = Math.floor((difference % 1000) / 10);
+
+            hours = (hours < 10) ? "0" + hours : hours;
+            minutes = (minutes < 10) ? "0" + minutes : minutes;
+            seconds = (seconds < 10) ? "0" + seconds : seconds;
+            milliseconds = (milliseconds < 10) ? "0" + milliseconds : milliseconds;
+
+            timeDisplay.innerHTML = `${hours}:${minutes}:${seconds}.${milliseconds}`;
+        }
+
+        function displayLaps() {
+            lapsContainer.innerHTML = laps.map((lap, index) => {
+                let hours = Math.floor((lap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((lap % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((lap % (1000 * 60)) / 1000);
+                let milliseconds = Math.floor((lap % 1000) / 10);
+
+                hours = (hours < 10) ? "0" + hours : hours;
+                minutes = (minutes < 10) ? "0" + minutes : minutes;
+                seconds = (seconds < 10) ? "0" + seconds : seconds;
+                milliseconds = (milliseconds < 10) ? "0" + milliseconds : milliseconds;
+
+                return `<div>Lap ${index + 1}: ${hours}:${minutes}:${seconds}.${milliseconds}</div>`;
+            }).join('');
+        }
+
+    </script>
+</body>
+
+</html>

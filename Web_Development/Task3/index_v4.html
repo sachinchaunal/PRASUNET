@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #252A34;
+            /* Updated background color */
+            color: white;
+            /* Updated text color */
+        }
+
+        .game-mode {
+            background-color: #f0f0f0;
+            /* Light grey background */
+            border-radius: 8px;
+            /* Rounded corners */
+            padding: 20px;
+            /* Spacing inside the box */
+            max-width: 300px;
+            /* Maximum width of the box */
+            margin: auto;
+            /* Center the box */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            /* Subtle shadow for depth */
+        }
+
+        .game-mode label {
+            font-size: 16px;
+            /* Larger text for the label */
+            color: #333;
+            /* Dark grey color for text */
+            margin-bottom: 10px;
+            /* Space below the label */
+            display: block;
+            /* Ensure the label is on its own line */
+        }
+
+        #mode {
+            width: 100%;
+            appearance: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        #mode:focus {
+            outline: none;
+            border-color: #FF2E63;
+            box-shadow: 0 0 0 2px rgba(255, 46, 99, 0.2);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #252A34;
+            /* Updated background color */
+            border: 1px solid #ccc;
+            font-size: 2em;
+            cursor: pointer;
+            color: white;
+            /* Updated text color */
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .cell:hover {
+            background-color: #FF2E63;
+            /* Updated hover background color */
+        }
+
+        .status {
+            margin-top: 5px;
+            font-size: 1.5em;
+            color: white;
+            /* Updated text color */
+        }
+
+        .restart {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #FF2E63;
+            /* Updated button background color */
+            color: white;
+            /* Updated button text color */
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+
+        .restart:hover {
+            background-color: #08D9D6;
+            /* Updated hover background color */
+            color: #252A34;
+            /* Updated hover text color */
+        }
+
+        .turn-container {
+            width: 170px;
+            height: 70px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            position: relative;
+        }
+
+        .turn-container h3 {
+            margin: 0;
+            grid-column-start: 1;
+            grid-column-end: 3;
+        }
+
+        .turn-container .turn-box {
+            border: 3px solid #000;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .turn-container .turn-box:nth-child(even) {
+            border-right: none;
+        }
+
+        .bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 85px;
+            height: 35px;
+            background-color: #FF2E63;
+            box-shadow: 0px 1px 20px 12px rgb(235 0 0 / 10%);
+            z-index: -1;
+        }
+        @media screen and (max-width: 442px){
+            #mode{
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tic-Tac-Toe</h1>
+    <div class="game-mode">
+        <label for="mode">Choose Game Mode:</label>
+        <select id="mode">
+            <option value="player">Player vs Player</option>
+            <option value="ai">Player vs AI</option>
+        </select>
+    </div>
+    <div class="turn-container">
+        <h3>Turn For</h3>
+        <div class="turn-box align">X</div>
+        <div class="turn-box align">O</div>
+        <div class="bg"></div>
+    </div>
+    <div class="game-board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <div class="status"></div>
+    <button class="restart">Restart Game</button>
+    <script>
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.querySelector('.status');
+        const restartBtn = document.querySelector('.restart');
+        const modeSelect = document.getElementById('mode');
+        const turnBoxes = document.querySelectorAll('.turn-box');
+        const turnBg = document.querySelector('.bg');
+
+        let currentPlayer = 'X';
+        let gameState = Array(9).fill("");
+        const aiPlayer = 'O'; // AI is 'O'
+        const humanPlayer = 'X'; // Human is 'X'
+        let gameMode = modeSelect.value;
+
+        const winConditions = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        modeSelect.addEventListener('change', (e) => {
+            gameMode = e.target.value;
+            restartGame();
+        });
+
+        const handleCellClick = (e) => {
+            const index = e.target.getAttribute('data-index');
+
+            if (gameState[index] !== "" || checkWinner()) return;
+
+            gameState[index] = currentPlayer;
+            e.target.innerText = currentPlayer;
+            changeTurn();
+
+            if (checkWinner()) {
+                statusText.innerText = `${currentPlayer} wins!`;
+                highlightWinningCells();
+            } else if (!gameState.includes("")) {
+                statusText.innerText = "It's a draw!";
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                if (gameMode === 'ai' && currentPlayer === aiPlayer) {
+                    setTimeout(aiMove, 500); // Delay AI move for better UX
+                } else {
+                    statusText.innerText = `Player ${currentPlayer}'s turn`;
+                }
+            }
+        };
+
+        const aiMove = () => {
+            const bestMove = minimax(gameState, aiPlayer);
+            gameState[bestMove.index] = aiPlayer;
+            cells[bestMove.index].innerText = aiPlayer;
+            changeTurn();
+
+            if (checkWinner()) {
+                statusText.innerText = `${aiPlayer} wins!`;
+                highlightWinningCells();
+            } else if (!gameState.includes("")) {
+                statusText.innerText = "It's a draw!";
+            } else {
+                currentPlayer = humanPlayer;
+                statusText.innerText = `Player ${currentPlayer}'s turn`;
+            }
+        };
+
+        const minimax = (newGameState, player) => {
+            const availableMoves = newGameState.reduce((acc, cell, index) => {
+                if (cell === "") acc.push(index);
+                return acc;
+            }, []);
+
+            if (checkWinnerState(newGameState, humanPlayer)) {
+                return { score: -10 };
+            } else if (checkWinnerState(newGameState, aiPlayer)) {
+                return { score: 10 };
+            } else if (availableMoves.length === 0) {
+                return { score: 0 };
+            }
+
+            const moves = [];
+
+            for (let i = 0; i < availableMoves.length; i++) {
+                const move = {};
+                move.index = availableMoves[i];
+                newGameState[availableMoves[i]] = player;
+
+                if (player === aiPlayer) {
+                    const result = minimax(newGameState, humanPlayer);
+                    move.score = result.score;
+                } else {
+                    const result = minimax(newGameState, aiPlayer);
+                    move.score = result.score;
+                }
+
+                newGameState[availableMoves[i]] = "";
+                moves.push(move);
+            }
+
+            let bestMove;
+            if (player === aiPlayer) {
+                let bestScore = -10000;
+                for (let i = 0; i < moves.length; i++) {
+                    if (moves[i].score > bestScore) {
+                        bestScore = moves[i].score;
+                        bestMove = i;
+                    }
+                }
+            } else {
+                let bestScore = 10000;
+                for (let i = 0; i < moves.length; i++) {
+                    if (moves[i].score < bestScore) {
+                        bestScore = moves[i].score;
+                        bestMove = i;
+                    }
+                }
+            }
+
+            return moves[bestMove];
+        };
+
+        const checkWinnerState = (state, player) => {
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (state[a] === player && state[b] === player && state[c] === player) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const checkWinner = () => {
+            let roundWon = false;
+
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    roundWon = true;
+                    break;
+                }
+            }
+
+            return roundWon;
+        };
+
+        const highlightWinningCells = () => {
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    cells[a].style.backgroundColor = '#08D9D6'; // Updated color for winning cells
+                    cells[b].style.backgroundColor = '#08D9D6'; // Updated color for winning cells
+                    cells[c].style.backgroundColor = '#08D9D6'; // Updated color for winning cells
+                    break;
+                }
+            }
+        };
+
+        const restartGame = () => {
+            gameState = Array(9).fill("");
+            currentPlayer = humanPlayer; // Ensure this is set to "X"
+            statusText.innerText = `Player ${currentPlayer}'s turn`;
+            cells.forEach(cell => {
+                cell.innerText = "";
+                cell.style.backgroundColor = ''; // Reset cell background color
+            });
+
+            // Reset turn boxes to default state
+            turnBoxes.forEach(box => box.classList.remove('active'));
+            // Assuming the first turn box is for "X" and the second is for "O"
+            if (currentPlayer === "X") {
+                turnBoxes[0].classList.add('active'); // Activate "X"
+                turnBg.style.left = "0"; // Adjust if the turnBg position indicates the active player
+            } else {
+                turnBoxes[1].classList.add('active'); // Activate "O"
+                turnBg.style.left = "85px"; // Adjust if necessary
+            }
+        };
+
+        const changeTurn = () => {
+            turnBoxes.forEach(box => box.classList.toggle('active'));
+            turnBg.style.left = turnBg.style.left === "85px" ? "0" : "85px";
+        };
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        restartBtn.addEventListener('click', restartGame);
+
+        statusText.innerText = `Player ${currentPlayer}'s turn`;
+
+    </script>
+</body>
+
+</html>
